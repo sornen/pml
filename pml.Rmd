@@ -1,0 +1,101 @@
+Predicting the manner in which an exercise was performed.
+---------------------------------------------------------
+
+```{r}
+library(doMC)
+library(caret)
+library(randomForest)
+
+setwd("/home/morgank/")
+```
+Reading in the data
+```{r}
+training = read.csv("education/practical machine learning/Project/pml-training.csv")[-1:-7]
+testing = read.csv("education/practical machine learning/Project/pml-testing.csv")[-1:-7]
+```
+
+Number of training and testing samples and variables
+```{r}
+dim(training); dim(testing)
+```
+Remove columns where there is missing data (NA). Probably do not need to interpolate NA data since
+have plenty of other variable with complete numeric data.
+
+```{r}
+retain <- colSums(is.na(training))==0
+testing = testing[, retain]
+training = training[, retain]
+```
+Now the dim is reduced
+```{r}
+dim(training);dim(testing)
+```
+Remove non numeric data from dataframe
+```{r}
+nums <- sapply(training, is.numeric)
+```
+But keep the manner in which they did the exercise aka the "classe" variable, 
+which is the factor we are interested in predicting
+```{r}
+nums["classe"] = TRUE 
+training <- training[, nums]
+testing <- testing[, nums]
+```
+and the number of variable is considerably reduced
+```{r}
+dim(training); dim(testing)
+```
+
+Principal component analysis is used to find the most important features 
+that explain 90 % of the data.
+```{r}
+pca <- preProcess(training[, -53], method="pca", thresh=0.90)
+trainingPC <- predict(pca, training[, -53])
+```
+An example plot to see that the principal components are different for the first two results
+```{r}
+plot(trainingPC[,1],trainingPC[,2],col=training$classe)
+```
+
+Use the PC in a randomForest
+```{r}
+rf <- randomForest(training$classe ~ ., data=trainingPC)
+testingPC <- predict(pca, testing[, -53])
+```
+Use the model on the test sample
+```{r}
+pre <- predict(rf, testingPC)
+```
+Print out the predictions for the test data set
+```{r}
+pre
+```
+Chart of variable importance as measured by Gini
+```{r}
+varImpPlot(rf, sort=TRUE, main="Variable importance for principal components")
+```
+
+Lets compare to using a randomForest using all the given variables
+```{r}
+rf <- randomForest(classe ~ ., data=training)
+
+
+Use the model on the test samples
+```{r}
+pre <- predict(rf, testing)
+pre
+```
+One point of data (3) in the testing set is different to the PCA data.
+Chart the variable importance as measured by Gini
+```{r}
+varImpPlot(rf, sort=TRUE, main="Variable importance for training")
+```
+
+
+
+
+
+
+
+
+
