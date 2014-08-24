@@ -6,7 +6,7 @@ library(doMC)
 library(caret)
 library(randomForest)
 
-setwd("/home/morgank/")
+setwd("/home/anon/")
 ```
 Reading in the data
 ```{r}
